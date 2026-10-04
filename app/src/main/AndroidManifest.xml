@@ -338,6 +338,12 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
+
+        <provider
+            android:name=".filesystem.remote.RemoteFileProvider"
+            android:authorities="${applicationId}.remotefiles"
+            android:exported="false"
+            android:grantUriPermissions="true" />
     </application>
 
 </manifest>

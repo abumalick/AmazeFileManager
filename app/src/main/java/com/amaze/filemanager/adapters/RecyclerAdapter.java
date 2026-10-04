@@ -67,6 +67,7 @@ import com.amaze.filemanager.fileoperations.filesystem.OpenMode;
 import com.amaze.filemanager.filesystem.PasteHelper;
 import com.amaze.filemanager.filesystem.files.CryptUtil;
 import com.amaze.filemanager.filesystem.files.sort.DirSortBy;
+import com.amaze.filemanager.filesystem.remote.RemoteFileProvider;
 import com.amaze.filemanager.ui.ItemPopupMenu;
 import com.amaze.filemanager.ui.activities.MainActivity;
 import com.amaze.filemanager.ui.activities.superclasses.PreferenceActivity;
@@ -1440,6 +1441,14 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     } else {
       popupMenu.getMenu().findItem(R.id.book).setVisible(false);
       popupMenu.getMenu().findItem(R.id.compress).setVisible(true);
+
+      OpenMode mode = rowItem.getMode();
+      boolean isNetworkFile = mode == OpenMode.SFTP || mode == OpenMode.SMB || mode == OpenMode.FTP;
+      if (isNetworkFile && !RemoteFileProvider.canServe(mode)) {
+        // FileProvider would build a URI from the server URL that other apps cannot read
+        popupMenu.getMenu().findItem(R.id.open_with).setVisible(false);
+        popupMenu.getMenu().findItem(R.id.share).setVisible(false);
+      }
 
       if (description.endsWith(fileExtensionZip)
           || description.endsWith(fileExtensionJar)

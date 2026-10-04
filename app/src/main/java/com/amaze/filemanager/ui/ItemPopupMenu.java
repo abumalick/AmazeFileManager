@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import com.amaze.filemanager.R;
 import com.amaze.filemanager.adapters.data.LayoutElementParcelable;
@@ -33,12 +34,15 @@ import com.amaze.filemanager.filesystem.HybridFileParcelable;
 import com.amaze.filemanager.filesystem.PasteHelper;
 import com.amaze.filemanager.filesystem.files.EncryptDecryptUtils;
 import com.amaze.filemanager.filesystem.files.FileUtils;
+import com.amaze.filemanager.filesystem.remote.RemoteFileProvider;
 import com.amaze.filemanager.ui.activities.MainActivity;
 import com.amaze.filemanager.ui.dialogs.EncryptAuthenticateDialog;
 import com.amaze.filemanager.ui.dialogs.EncryptWithPresetPasswordSaveAsDialog;
 import com.amaze.filemanager.ui.dialogs.GeneralDialogCreation;
+import com.amaze.filemanager.ui.dialogs.share.ShareTask;
 import com.amaze.filemanager.ui.fragments.MainFragment;
 import com.amaze.filemanager.ui.fragments.preferencefragments.PreferencesConstants;
+import com.amaze.filemanager.ui.icons.MimeTypes;
 import com.amaze.filemanager.ui.provider.UtilitiesProvider;
 import com.amaze.filemanager.utils.DataUtils;
 
@@ -111,6 +115,15 @@ public class ItemPopupMenu extends PopupMenu implements PopupMenu.OnMenuItemClic
         case ONEDRIVE:
           FileUtils.shareCloudFile(rowItem.desc, rowItem.getMode(), context);
           break;
+        case SFTP:
+        case SMB:
+          new ShareTask(
+                  mainActivity,
+                  new ArrayList<>(Collections.singletonList(remoteFileUri())),
+                  utilitiesProvider.getAppTheme(),
+                  accentColor)
+              .execute(MimeTypes.getMimeType(rowItem.title, false));
+          break;
         default:
           ArrayList<File> arrayList = new ArrayList<>();
           arrayList.add(new File(rowItem.desc));
@@ -165,6 +178,11 @@ public class ItemPopupMenu extends PopupMenu implements PopupMenu.OnMenuItemClic
     } else if (item.getItemId() == R.id.open_with) {
       boolean useNewStack =
           sharedPrefs.getBoolean(PreferencesConstants.PREFERENCE_TEXTEDITOR_NEWSTACK, false);
+
+      if (RemoteFileProvider.canServe(rowItem.getMode())) {
+        FileUtils.openWith(remoteFileUri(), mainActivity, useNewStack);
+        return true;
+      }
 
       if (OpenMode.DOCUMENT_FILE.equals(rowItem.getMode())) {
 
@@ -253,5 +271,10 @@ public class ItemPopupMenu extends PopupMenu implements PopupMenu.OnMenuItemClic
       return true;
     }
     return false;
+  }
+
+  private Uri remoteFileUri() {
+    return RemoteFileProvider.uriFor(
+        context, rowItem.getMode(), rowItem.desc, rowItem.title, rowItem.longSize);
   }
 }
